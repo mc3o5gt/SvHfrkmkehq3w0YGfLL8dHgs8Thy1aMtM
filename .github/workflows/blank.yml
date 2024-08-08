@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      input:
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install
+        run: sudo -v ; curl https://rclone.org/install.sh | sudo bash
+
+      - name: Save
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << EOF > ~/.config/rclone/rclone.conf
+          ${{ secrets.CONFIG }}
+          EOF
+
+      - name: Get
+        run: |
+          INPUT=$(jq -r '.inputs.input' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$INPUT
+          echo INPUT=$INPUT >> $GITHUB_ENV
+
+      - name: Save
+        run: |
+          cat << EOF > main.py
+          ${{ secrets.MAIN }}
+          EOF
+
+      - name: Run
+        run: python main.py "$INPUT"
